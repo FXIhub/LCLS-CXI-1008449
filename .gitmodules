@@ -1,0 +1,3 @@
+[submodule "pypadf"]
+	path = pypadf
+	url = https://github.com/amartinrmit/pypadf.git
