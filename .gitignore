@@ -1,2 +1,3 @@
-
+PA-stuff/.ipynb_checkpoints/*
+PA-stuff/__pycache__/*
 ./om_example/hdf5
