@@ -1,6 +1,7 @@
 # LCLS-CXI-1008449
 - Experiment Directory: `/sdf/data/lcls/ds/cxi/cxi100844924`
 - SLACK chat: https://app.slack.com/client/E7SAV7LAD/C092393PP2B
+- elog: https://pswww.slac.stanford.edu/lgbk/lgbk/cxi100844924/eLog
 
 
 ### SSH access
