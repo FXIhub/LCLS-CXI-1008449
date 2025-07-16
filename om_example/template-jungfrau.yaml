@@ -6,21 +6,20 @@ om:
   colors_in_rich_console: true
 
 data_retrieval_layer:
-  psana_detector_name: DsdCsPad
-  psana_detector_distance_epics_name: CXI:DS2:MMS:06.RBV
+  psana_detector_name: jungfrau4M
+  psana_detector_distance_epics_name: Jungfrau_z
   fallback_detector_distance_in_mm: 2100.0
   #psana_post_sample_intensity_beamline_data_name: CXI-DG2-BMMON
   #psana_post_sample_intensity_wave8_name: CXI:DS1:MMS:06.RBV
-  #psana_calibration_directory: "/sdf/data/lcls/ds/cxi/cxip18619/calib"
-  psana_post_sample_intensity_beamline_data_name: CXI:DS2:MMS:06.RBV
-  psana_post_sample_intensity_wave8_name: CXI:DS2:MMS:06.RBV
-  psana_calibration_directory: "/sdf/data/lcls/ds/cxi/cxip18619/calib"
+  #psana_calibration_directory: "/sdf/data/lcls/ds/cxi/cxi100844924/calib"
+  #psana_post_sample_intensity_beamline_data_name: CXI:DS2:MMS:06.RBV
+  #psana_post_sample_intensity_wave8_name: CXI:DS2:MMS:06.RBV
+  psana_calibration_directory: "/sdf/data/lcls/ds/cxi/cxi100844924/calib"
   required_data:
   - detector_data
   - beam_energy
   - detector_distance
   - timestamp
-  - post_sample_intensity
   - event_id
 
 correction:

@@ -32,16 +32,16 @@ sed -i "s/GEOMFILE/$geomfn/" monitor.yaml
 
 mw=monitor_wrapper.sh
 
-DATASOURCE="exp=$expt:run=$RUN "
+DATASOURCE="exp=$expt:run=$RUN " ##new specfic datasource
 
 source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh
-source ~/software/om/install/bin/activate-om
+source ~/software/install/bin/activate-om
 echo Creating and Running $(pwd)/${mw}
 echo '#!/bin/bash' > $(pwd)/${mw}
 echo '# File automatically created by the'  >> $(pwd)/${mw}
 echo '# run_om.sh script' >> $(pwd)/${mw}
 echo 'source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh' >> $(pwd)/${mw}
-echo 'source ~/software/om/install/bin/activate-om' >> $(pwd)/${mw}
+echo 'source ~/software/install/bin/activate-om' >> $(pwd)/${mw}
 echo "om_monitor.py ${DATASOURCE}" >> $(pwd)/${mw}
 chmod +x $(pwd)/${mw}
 
