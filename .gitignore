@@ -1,2 +1,3 @@
 
-./om_example/hdf5
+./om_scripts/hdf5/*
+
