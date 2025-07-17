@@ -18,8 +18,8 @@ env = ds.env() #not sure what this is or why we load it
 det_name = 'CxiDs1.0:Jungfrau.0' ## or alias 'jungfrau4M'
 
 
-run_mean = np.zeros(DET_SHAPE)
-run_meansq = np.zeros(DET_SHAPE)
+run_mean = np.zeros(ASSEM_SHAPE)
+run_meansq = np.zeros(ASSEM_SHAPE)
 
 
 det = psana.Detector(det_name, env)
@@ -27,10 +27,10 @@ det = psana.Detector(det_name, env)
 event_inten = []
 
 for i, event in enumerate(ds.events()):
-    if i>10:
+    if i>40:
         break
     print(i, end='\r')
-    calib = det.calib(event)
+    calib = det.image(event)
     
     run_mean += calib
     run_meansq += calib**2
