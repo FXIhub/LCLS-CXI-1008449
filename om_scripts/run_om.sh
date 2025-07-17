@@ -5,11 +5,12 @@
 RUN=$1
 RUN_STR=$(printf "%04d" $RUN)
 
-expt='cxip18619'
+#expt='cxip18619'
+expt='cxi100844924'
 
 dir=hdf5/${expt}_r$RUN_STR
-maskfn=${expt}_r4_mask.h5
-geomfn=${expt}_v2.geom
+maskfn=${expt}_mask.h5
+geomfn=${expt}.geom
 QUEUE='milano'
 CORES=4
 
