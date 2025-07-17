@@ -56,3 +56,9 @@ cd mask
 python psana_mask.py -s exp=cxi100844924:run=16 -d jungfrau4M -o [out file name]
 ```
 
+### Editing masks
+Requires source environment.
+```
+cheetah_view.py [hdf5 file]
+```
+

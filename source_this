@@ -1,5 +1,6 @@
 #! /bin/bash
 
 source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh
+#source /sdf/group/lcls/ds/tools/om/cheetah/setup-120124.sh
 source ~/software/install/bin/activate-om
 
