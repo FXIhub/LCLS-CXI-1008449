@@ -1,49 +1,27 @@
-# In the last line, replace **X** with the number of OM nodes to run on each
-# machine and **Y** with a comma-separated list of hostnames corresponding to the
-# machines on which OnDA should run.
+#source files on cxi-monitor
+source /cds/sw/ds/ana/conda1/manage/bin/psconda.sh
+source /cds/home/opr/cxiopr/OM-GUI/cxi100844924/install/bin/activate-om
 
-RUN=$1
-RUN_STR=$(printf "%04d" $RUN)
-
-#expt='cxip18619'
-expt='cxi100844924'
-
-dir=hdf5/${expt}_r$RUN_STR
-maskfn=${expt}_mask.h5
-geomfn=${expt}.geom
-QUEUE='milano'
-CORES=4
+#copy the template sym link to the monitor file that om reads
+cp template.yaml monitor.yaml
 
 
-if [[ ! -e $dir ]]; then
-    mkdir -p $dir
-elif [[ ! -d $dir ]]; then
-    echo "$dir already exists but is not a directory" 1>&2
-fi
-
-cd $dir
-
-cp ../../template-${expt}.yaml monitor.yaml
-cp ../../${geomfn} .
-cp ../../${maskfn} .
-
-sed -i "s/RUN/$RUN_STR/" monitor.yaml
-sed -i "s/MASKFILE/$maskfn/" monitor.yaml
-sed -i "s/GEOMFILE/$geomfn/" monitor.yaml
-
+#file that actually runs om
 mw=monitor_wrapper.sh
 
-DATASOURCE="exp=$expt:run=$RUN " ##new specfic datasource for live
 
-source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh
-source ~/software/install/bin/activate-om
-echo Creating and Running $(pwd)/${mw}
+#write the file to run om
 echo '#!/bin/bash' > $(pwd)/${mw}
 echo '# File automatically created by the'  >> $(pwd)/${mw}
 echo '# run_om.sh script' >> $(pwd)/${mw}
-echo 'source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh' >> $(pwd)/${mw}
-echo 'source ~/software/install/bin/activate-om' >> $(pwd)/${mw}
-echo "om_monitor.py ${DATASOURCE}" >> $(pwd)/${mw}
+#source the envs
+echo 'source /cds/sw/ds/ana/conda1/manage/bin/psconda.sh' >> $(pwd)/${mw}
+echo 'source /cds/home/opr/cxiopr/OM-GUI/cxi100844924/install/bin/activate-om' >> $(pwd)/${mw}
+#run om with online data source
+echo "om_monitor.py 'shmem=psana.0:stop=no'" >> $(pwd)/${mw}
+#make the file executeable
 chmod +x $(pwd)/${mw}
+#run the executable we wrote
+$(which mpirun) --mca oob_tcp_if_exclude enp65s0f1,enp66s0 --oversubscribe --map-by ppr:2:node \
+                --host daq-cxi-mon10,daq-cxi-mon11,daq-cxi-mon13,daq-cxi-mon14 $(pwd)/${mw}
 
-mpirun -n ${CORES} $(pwd)/${mw}
