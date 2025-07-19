@@ -3,7 +3,6 @@ import time
 import numpy as np
 import psana
 from constants import *
-from utils import *
 import h5py
 import sys
 
@@ -36,6 +35,7 @@ pixel_hist_ge30 = np.zeros(hist_nbins)
 
 run_mean = np.zeros(DET_SHAPE)
 run_meansq = np.zeros(DET_SHAPE)
+
 
 run_intens = []
 
@@ -81,18 +81,16 @@ comm.Reduce(run_meansq, total_run_meansq) # sum the image across all ranks
 MPI.Finalize()
 
 
-
-
 if rank==0:
     t2 = time.time()
 
-    print(f'Completed in: {np.round(t2-t1)/60} minutes')
+    print(f'Completed {i} events in: {np.round(t2-t1)/60} minutes')
 
-    with h5py.File(f'{H5_FOLDER}/r{run}.h5', 'w') as f:
+    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5', 'w') as f:
         f['/run_mean'] = total_run_mean/i
         f['/run_sigma'] = np.sqrt(total_run_meansq - total_run_mean**2)/i
+        
         f['/run_intens']= np.concatenate(total_run_intens[:])
-    
         
         f['/pixel_hist_le30'] = total_pixel_hist_le30
         f['/pixel_hist_ge30'] = total_pixel_hist_ge30
@@ -100,13 +98,6 @@ if rank==0:
         f['/pixel_hist_bins_le30'] = hist_bins_le30
         f['/pixel_hist_bins_ge30'] = hist_bins_ge30
 
-        
-    
-    
-    #f['/event_inten'] = event_inten
-    #f['/nevents'] = i
-    #f['/pixel_hist_le25'] = pixel_hist_le25
-    #f['/pixel_hist_bins_le25'] = pixel_hist_bins_le25
-    #f['/pixel_hist_ge25'] = pixel_hist_ge25
-    #f['/pixel_hist_bins_ge25'] = pixel_hist_bins_ge25
-    
+
+
+
