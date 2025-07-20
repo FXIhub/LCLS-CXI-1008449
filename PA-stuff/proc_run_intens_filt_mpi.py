@@ -6,6 +6,8 @@ from constants import *
 import h5py
 import sys
 
+from utils import *
+
 from mpi4py import MPI
 
 
@@ -20,11 +22,23 @@ size = comm.Get_size()
 
 run = sys.argv[1]
 
+
+timestamps, run_intens = get_run_intens(run)
+med = np.median(run_intens)
+    
+loc = np.where(run_intens < 10*med)
+timestamps, run_intens = timestamps[loc], run_intens[loc]
+
+loc = np.where(run_intens > med/10)
+timestamps, run_intens = timestamps[loc], run_intens[loc]
+
+p16 = np.percentile(run_intens, 16)
+p84 = np.percentile(run_intens, 84)
+wid = p84 - p16
+
 ds = psana.MPIDataSource(f'exp={EXP_NAME}:run={run}:smd')
 #sds.break_after(1000)
 det = psana.Detector(DET_NAME)
-
-
 
 
 hist_nbins = 1000
@@ -47,24 +61,31 @@ for i, event in enumerate(ds.events()):
     
     calib = det.calib(event)
 
-    run_intens.append(calib.sum())
+    intens = calib.sum()
 
-    run_mean += calib
-    run_meansq += calib**2
+    
+    if intens>med-wid and intens<med+wid:
 
-    hist_le30, hist_bins_le30 = np.histogram(calib[calib<=30], bins=hist_nbins)
-    hist_ge30, hist_bins_ge30 = np.histogram(calib[calib>=30], bins=hist_nbins)
+        run_intens.append(calib.sum())
+    
+        run_mean += calib
+        run_meansq += calib**2
+    
+        hist_le30, hist_bins_le30 = np.histogram(calib[calib<=30], bins=hist_nbins)
+        hist_ge30, hist_bins_ge30 = np.histogram(calib[calib>=30], bins=hist_nbins)
+    
+        pixel_hist_le30 +=hist_le30
+        pixel_hist_ge30 +=hist_ge30
+    
+        evtId = event.get(psana.EventId)
+        seconds = evtId.time()[0]
+        nanoseconds = evtId.time()[1]
+    
+        timestamp = seconds+nanoseconds*1e-9
+    
+        timestamps.append(timestamp)
 
-    pixel_hist_le30 +=hist_le30
-    pixel_hist_ge30 +=hist_ge30
-
-    evtId = event.get(psana.EventId)
-    seconds = evtId.time()[0]
-    nanoseconds = evtId.time()[1]
-
-    timestamp = seconds+nanoseconds*1e-9
-
-    timestamps.append(timestamp)
+        
     
 
 
@@ -97,9 +118,9 @@ if rank==0:
 
     print(f'Completed {i} events in: {np.round(t2-t1)/60} minutes')
 
-    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5', 'w') as f:
-        f['/run_mean'] = total_run_mean/i
-        f['/run_sigma'] = np.sqrt(total_run_meansq - total_run_mean**2)/i
+    with h5py.File(f'{H5_FOLDER}/intens_filt/r{int(run):04d}_proc_intens_filt.h5', 'w') as f:
+        f['/run_mean'] = total_run_mean/len(np.concatenate(total_run_intens[:]))
+        f['/run_sigma'] = np.sqrt(total_run_meansq - total_run_mean**2)/len(np.concatenate(total_run_intens[:]))
         
         f['/run_intens']= np.concatenate(total_run_intens[:])
         
