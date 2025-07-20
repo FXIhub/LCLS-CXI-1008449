@@ -7,27 +7,48 @@ import h5py
 import matplotlib.pyplot as plt
 
 
-def get_run_assem_mean(run):
+def get_run_assem_mean(run, sf=1):
     with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5') as f:
         run_mean = f['/run_mean'][:]
     ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
     det = psana.Detector(DET_NAME)
     for evt in ds.events():
         break
-    assem_run_mean = det.image(evt, run_mean)
+    assem_run_mean = det.image(evt, run_mean)*sf
+    return assem_run_mean
+
+def get_run_assem_intens_filt_mean(run, sf=1):
+    with h5py.File(f'{H5_FOLDER}/intens_filt/r{int(run):04d}_proc_intens_filt.h5') as f:
+        run_mean = f['/run_mean'][:]
+    ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
+    det = psana.Detector(DET_NAME)
+    for evt in ds.events():
+        break
+    assem_run_mean = det.image(evt, run_mean)*sf
+    return assem_run_mean
+
+def get_run_assem_high_intens_filt_mean(run, sf=1):
+    with h5py.File(f'{H5_FOLDER}/intens_filt/r{int(run):04d}_proc_high_intens_filt.h5') as f:
+        run_mean = f['/run_mean'][:]
+    ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
+    det = psana.Detector(DET_NAME)
+    for evt in ds.events():
+        break
+    assem_run_mean = det.image(evt, run_mean)*sf
     return assem_run_mean
 
 def get_run_intens(run):
     with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5') as f:
         run_intens = f['/run_intens'][:]
+        timestamps = f['/timestamps'][:]
 
-    return run_intens
+    return timestamps, run_intens
 
 
-def get_run_azimuthal_average(run, rbins=100, rmin=None, rmax=None):
+def get_run_azimuthal_average(run, rbins=100, rmin=None, rmax=None, sf=1):
 
     with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5') as f:
-        run_mean = f['/run_mean'][:]
+        run_mean = f['/run_mean'][:]*sf
     
     ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
     det = psana.Detector(DET_NAME)
