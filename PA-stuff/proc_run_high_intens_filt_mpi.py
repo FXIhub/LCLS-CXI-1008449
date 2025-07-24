@@ -2,7 +2,6 @@
 import time
 import numpy as np
 import psana
-from constants import *
 import h5py
 import sys
 
@@ -115,7 +114,7 @@ if rank==0:
 
     print(f'Completed {i} events in: {np.round(t2-t1)/60} minutes')
 
-    with h5py.File(f'{H5_FOLDER}/intens_filt/r{int(run):04d}_proc_high_intens_filt.h5', 'w') as f:
+    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc_high_intens_filt.h5', 'w') as f:
         f['/run_mean'] = total_run_mean/len(np.concatenate(total_run_intens[:]))
         f['/run_sigma'] = np.sqrt(total_run_meansq - total_run_mean**2)/len(np.concatenate(total_run_intens[:]))
         
