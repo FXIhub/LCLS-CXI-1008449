@@ -2,53 +2,50 @@
 
 import numpy as np
 import psana
-from constants import *
 import h5py
 import matplotlib.pyplot as plt
 
 
-def get_run_assem_mean(run, sf=1):
-    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5') as f:
+
+
+DET_NAME = 'CxiDs1.0:Jungfrau.0'
+DET_SHAPE = (8, 512, 1024)
+ASSEM_SHAPE = (2203, 2299)
+
+EXP_NAME ='cxi100844924'
+EXP_FOLDER = f'/sdf/data/lcls/ds/cxi/{EXP_NAME}'
+
+H5_FOLDER = f'{EXP_FOLDER}/results/h5out'
+MASK_FILE =  f'{EXP_FOLDER}/results/mask/combine.h5'
+GEOM_FILE = f'{EXP_FOLDER}/results/geom/jul17convert.geom'
+
+
+
+
+
+def get_run_assem_mean(run, suff=''):
+    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc{suff}.h5') as f:
         run_mean = f['/run_mean'][:]
     ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
     det = psana.Detector(DET_NAME)
     for evt in ds.events():
         break
-    assem_run_mean = det.image(evt, run_mean)*sf
+    assem_run_mean = det.image(evt, run_mean)
     return assem_run_mean
 
-def get_run_assem_intens_filt_mean(run, sf=1):
-    with h5py.File(f'{H5_FOLDER}/intens_filt/r{int(run):04d}_proc_intens_filt.h5') as f:
-        run_mean = f['/run_mean'][:]
-    ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
-    det = psana.Detector(DET_NAME)
-    for evt in ds.events():
-        break
-    assem_run_mean = det.image(evt, run_mean)*sf
-    return assem_run_mean
 
-def get_run_assem_high_intens_filt_mean(run, sf=1):
-    with h5py.File(f'{H5_FOLDER}/intens_filt/r{int(run):04d}_proc_high_intens_filt.h5') as f:
-        run_mean = f['/run_mean'][:]
-    ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
-    det = psana.Detector(DET_NAME)
-    for evt in ds.events():
-        break
-    assem_run_mean = det.image(evt, run_mean)*sf
-    return assem_run_mean
-
-def get_run_intens(run):
-    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5') as f:
+def get_run_intens(run, suff=''):
+    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc{suff}.h5') as f:
         run_intens = f['/run_intens'][:]
         timestamps = f['/timestamps'][:]
 
     return timestamps, run_intens
 
 
-def get_run_azimuthal_average(run, rbins=100, rmin=None, rmax=None, sf=1):
+def get_run_azimuthal_average(run, rbins=100, rmin=None, rmax=None, suff=''):
 
-    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc.h5') as f:
-        run_mean = f['/run_mean'][:]*sf
+    with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc{suff}.h5') as f:
+        run_mean = f['/run_mean'][:]
     
     ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
     det = psana.Detector(DET_NAME)
