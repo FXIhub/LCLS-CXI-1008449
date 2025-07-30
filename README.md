@@ -5,7 +5,16 @@
 
 ### SSH access
 ```
-ssh amorgan@s3dflogin.slac.stanford.edu
+# optional
+ssh-keygen 
+ssh-copy-id amorgan@s3dflogin.slac.stanford.edu
+
+ssh -Y amorgan@s3dflogin.slac.stanford.edu
+
+# optional
+ssh-keygen 
+ssh-copy-id psana
+
 ssh psana
 cd /sdf/data/lcls/ds/cxi/cxi100844924
 ```
@@ -13,7 +22,14 @@ cd /sdf/data/lcls/ds/cxi/cxi100844924
 ### Sourcing environment
 Sources two envs, om must be installed for the second environment.
 ```
+cd scratch/LCLS-CXI-1008449
 source ./source_this
+```
+
+### Look at frames
+after ssh'ing (as above with -Y argument)
+```
+python analysis/look_at_frames.py <run_number>
 ```
 
 ### Installing om

@@ -51,7 +51,7 @@ class Application(QtWidgets.QMainWindow):
     def __init__(self, frame_getter):
         super().__init__()
         self.Z = frame_getter.shape[0]
-        self.frame_index = 0
+        self.frame_index = -1
 
         self.display = np.zeros(frame_getter.shape[1:], dtype=frame_getter.dtype)
         self.display[:] = np.nan
@@ -87,12 +87,13 @@ class Application(QtWidgets.QMainWindow):
         vbox.addWidget(self.plot)
         vbox.addWidget(z_sliderW)
 
+        self.replot_frame(True)
+
         ## Display the widget as a new window
         w.setLayout(vbox)
         self.setCentralWidget(w)
         self.resize(800, 480)
 
-        self.replot_frame(True)
 
     def replot_frame(self, auto=False):
         if self.in_replot:
@@ -103,7 +104,6 @@ class Application(QtWidgets.QMainWindow):
             if self.frame_index != i :
                 self.frame_index = i
 
-                print()
                 print('frame index: ', self.frame_index)
 
                 self.updateDisplayRGB(auto)
@@ -195,6 +195,8 @@ if __name__ == '__main__':
             args.run,
             args.DET_NAME
             )
+
+    print('drag line with mouse or use arrow keys to scroll through frames')
 
     # Always start by initializing Qt (only once per application)
     signal.signal(signal.SIGINT, signal.SIG_DFL) # allow Control-C
