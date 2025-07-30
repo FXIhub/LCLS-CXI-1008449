@@ -51,8 +51,9 @@ class Application(QtWidgets.QMainWindow):
     def __init__(self, frame_getter):
         super().__init__()
         self.Z = frame_getter.shape[0]
+        self.frame_index = 0
 
-        self.display = np.zeros(frame_getter.shape, dtype=frame_getter.dtype)
+        self.display = np.zeros(frame_getter.shape[1:], dtype=frame_getter.dtype)
         self.display[:] = np.nan
         self.in_replot = False
         self.frame_getter = frame_getter
@@ -115,7 +116,7 @@ class Application(QtWidgets.QMainWindow):
         with masked pixels shown in blue at the maximum value of the cspad.
         This ensures that the masked pixels are shown at full brightness.
         """
-        self.display[:] = self.frame_getter[self.file_index]
+        self.display[:] = self.frame_getter[self.frame_index]
         if not auto :
             self.plot.setImage(self.display.T[::-1])
         else :
@@ -181,7 +182,7 @@ class Frame_getter_psana():
         out = []
         for i in inds:
             evt = self.myrun.event(self.event_times[i])
-            im = det.image(evt)
+            im = self.det.image(evt)
             out.append(im)
         return np.squeeze(out)
 
