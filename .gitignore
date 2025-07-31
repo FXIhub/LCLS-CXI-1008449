@@ -1,4 +1,4 @@
-./ssh
+./ssh/*
 ./om_scripts/hdf5/*
 
 PA-stuff/.ipynb_checkpoints/*
