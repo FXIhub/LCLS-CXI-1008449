@@ -1,9 +1,6 @@
-<<<<<<< HEAD
-
+./ssh
 ./om_scripts/hdf5/*
 
-=======
 PA-stuff/.ipynb_checkpoints/*
 PA-stuff/__pycache__/*
 ./om_example/hdf5
->>>>>>> 217ee00c650b3b9c9e1b99be6c7cc5980bf7f046

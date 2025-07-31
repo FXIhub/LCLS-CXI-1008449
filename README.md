@@ -19,6 +19,13 @@ ssh psana
 cd /sdf/data/lcls/ds/cxi/cxi100844924
 ```
 
+### Github push permissions
+Copy deployed keys to home directory for push permissions.
+```
+cp /sdf/data/lcls/ds/cxi/cxi100844924/scratch/LCLS-CXI-1008449/ssh/* ~/.ssh
+```
+this is not needed if you want to edit then push using your own github keys.
+
 ### Sourcing environment
 Sources two envs, om must be installed for the second environment.
 ```
