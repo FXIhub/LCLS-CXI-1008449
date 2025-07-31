@@ -20,11 +20,13 @@ cd /sdf/data/lcls/ds/cxi/cxi100844924
 ```
 
 ### Github push permissions
-Copy deployed keys to home directory for push permissions.
+Point ssh to deployed key for automatic push permissions:
 ```
-cp /sdf/data/lcls/ds/cxi/cxi100844924/scratch/LCLS-CXI-1008449/ssh/* ~/.ssh
+echo "Host LCLS-CXI-1008449 github.com
+Hostname github.com
+IdentityFile /sdf/scratch/lcls/ds/cxi/cxi100844924/scratch/LCLS-CXI-1008449/ssh/github_rsa" >> ~/.ssh/config
 ```
-this is not needed if you want to edit then push using your own github keys.
+this is not needed if you want to edit then push using your own github account + keys.
 
 ### Sourcing environment
 Sources two envs, om must be installed for the second environment.
