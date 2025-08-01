@@ -20,7 +20,8 @@ MASK_FILE =  f'{EXP_FOLDER}/results/mask/combine.h5'
 GEOM_FILE = f'{EXP_FOLDER}/results/geom/jul17convert.geom'
 
 
-
+def photon_convertion(ar):
+    return np.clip((ar/6 + 0.2).astype(int), 0, None)
 
 
 def get_run_assem_mean(run, suff=''):
