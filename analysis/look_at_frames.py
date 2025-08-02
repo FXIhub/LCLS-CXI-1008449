@@ -13,6 +13,7 @@ import psana
 try:
     import utils
     DET_NAME = utils.DET_NAME
+    EXP_NAME = utils.EXP_NAME
 except:
     DET_NAME = 'CxiDs1.0:Jungfrau.0'
     EXP_NAME = 'cxi100844924'
