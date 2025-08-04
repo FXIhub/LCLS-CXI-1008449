@@ -25,13 +25,18 @@ def parse_cmdline_args():
 
     parser.add_argument(
             '--file',
-            type=Path,
+            type=str,
             help="hdf5 file name with dataset appended. e.g. dataset.h5/data/data"
             )
     parser.add_argument(
             '--run',
             type=int,
             help="run number"
+            )
+    parser.add_argument(
+            '--sort_by',
+            type=str,
+            help="dataset to sort events by (high to low). hdf5 file name with dataset appended. e.g. dataset.h5/data/data"
             )
     parser.add_argument(
             '--EXP_NAME',
@@ -84,7 +89,7 @@ class Application(QtWidgets.QMainWindow):
         if self.Z > 1 :
             # add a z-slider for image selection
             z_sliderW = pg.PlotWidget()
-            z_sliderW.plot(self.frame_getter.inds, pen=(255, 150, 150))
+            z_sliderW.plot(self.frame_getter.plot, pen=(255, 150, 150))
             z_sliderW.setFixedHeight(100)
 
             # vline
@@ -150,7 +155,7 @@ class Application(QtWidgets.QMainWindow):
 
 class Frame_getter_file():
 
-    def __init__(self, fnam, dataset):
+    def __init__(self, fnam, dataset, sort_by=None):
         self.data = h5py.File(fnam)[dataset]
         shape = self.data.shape
 
@@ -191,6 +196,15 @@ class Frame_getter_file():
         self.shape = (self.N,) + im.shape
         self.dtype = im.dtype
         self.inds = np.arange(self.shape[0])
+        self.plot = self.inds
+
+        if sort_by is not None:
+            assert(sort_by.shape[0] == len(self.inds))
+
+            print('sorting events')
+            i = np.argsort(sort_by)[::-1]
+            self.inds = self.inds[i]
+            self.plot = sort_by[i]
 
     def __getitem__(self, key):
         """
@@ -208,7 +222,7 @@ class Frame_getter_file():
 
 class Frame_getter_psana():
 
-    def __init__(self, exp_name, run, det_name):
+    def __init__(self, exp_name, run, det_name, sort_by=None):
         # load timestamps
         # should be able to do this faster, but I forget where the documentation is
         # found it here: https://confluence.slac.stanford.edu/spaces/PSDM/pages/195233556/Jump+Quickly+to+Events+Using+Timestamps
@@ -241,6 +255,15 @@ class Frame_getter_psana():
         self.event_times = event_times
         self.det = det
         self.inds = np.arange(self.shape[0])
+        self.plot = self.inds
+
+        if sort_by is not None:
+            assert(sort_by.shape[0] == len(self.inds))
+
+            print('sorting events')
+            i = np.argsort(sort_by)[::-1]
+            self.inds = self.inds[i]
+            self.plot = sort_by[i]
 
     def __getitem__(self, key):
         """
@@ -250,7 +273,9 @@ class Frame_getter_psana():
         inds = np.atleast_1d(self.inds[key])
         out = []
         for i in inds:
-            evt = self.myrun.event(self.event_times[i])
+            et = self.event_times[i]
+            evt = self.myrun.event(et)
+            print(f'file index: {i} event time {et.time()} fiducial {et.fiducial()}')
             im = self.det.image(evt)
             out.append(im)
         return np.squeeze(out)
@@ -259,17 +284,31 @@ class Frame_getter_psana():
 if __name__ == '__main__':
     args = parse_cmdline_args()
 
-    if args.file is not None:
-        fnam = Path(str(args.file).split('.h5')[0] + '.h5')
-        dataset = str(args.file).split('.h5')[1]
+    if args.sort_by is not None:
+        fnam, dataset = args.sort_by.split('.h5')
+        fnam = Path(fnam + '.h5')
         assert(fnam.is_file())
-        frame_getter = Frame_getter_file(fnam, dataset)
+        with h5py.File(fnam) as f:
+            sort_by = f[dataset][()]
+    else:
+        sort_by = None
+
+    if args.file is not None:
+        fnam, dataset = args.file.split('.h5')
+        fnam = Path(fnam + '.h5')
+        assert(fnam.is_file())
+        frame_getter = Frame_getter_file(
+                fnam,
+                dataset,
+                sort_by=sort_by
+                )
 
     elif args.run is not None:
         frame_getter = Frame_getter_psana(
                 args.EXP_NAME,
                 args.run,
-                args.DET_NAME
+                args.DET_NAME,
+                sort_by=sort_by
                 )
     else:
         raise ValueError('file or run must be specified')
