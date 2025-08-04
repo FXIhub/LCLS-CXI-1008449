@@ -3,6 +3,7 @@ import h5py
 from PyQt5 import QtGui, QtCore, QtWidgets
 import pyqtgraph as pg
 import numpy as np
+from pathlib import Path
 import os
 import pickle
 from tqdm import tqdm
@@ -23,7 +24,12 @@ def parse_cmdline_args():
         description='view frames from saved xtc files at the LCLS')
 
     parser.add_argument(
-            'run',
+            '--file',
+            type=Path,
+            help="hdf5 file name with dataset appended. e.g. dataset.h5/data/data"
+            )
+    parser.add_argument(
+            '--run',
             type=int,
             help="run number"
             )
@@ -72,6 +78,9 @@ class Application(QtWidgets.QMainWindow):
         # scatter = pg.ScatterPlotItem([{'pos': self.centre, 'size': 5, 'pen': pg.mkPen('r'), 'brush': pg.mkBrush('r'), 'symbol': '+'}])
         # self.plot.addItem(scatter)
 
+        vbox = QtWidgets.QVBoxLayout()
+        vbox.addWidget(self.plot)
+
         if self.Z > 1 :
             # add a z-slider for image selection
             z_sliderW = pg.PlotWidget()
@@ -83,10 +92,7 @@ class Application(QtWidgets.QMainWindow):
             self.vline = z_sliderW.addLine(x = 0, movable=True, bounds = self.bounds)
             self.vline.setValue(0)
             self.vline.sigPositionChanged.connect(self.replot_frame)
-
-        vbox = QtWidgets.QVBoxLayout()
-        vbox.addWidget(self.plot)
-        vbox.addWidget(z_sliderW)
+            vbox.addWidget(z_sliderW)
 
         self.replot_frame(True)
 
@@ -101,7 +107,10 @@ class Application(QtWidgets.QMainWindow):
             return
         try:
             self.in_replot = True
-            i = int(self.vline.value())
+            if self.Z > 1:
+                i = int(self.vline.value())
+            else:
+                i = 0
             if self.frame_index != i :
                 self.frame_index = i
 
@@ -127,15 +136,74 @@ class Application(QtWidgets.QMainWindow):
         super(Application, self).keyPressEvent(event)
         key = event.key()
 
-        if key == QtCore.Qt.Key_Left :
-            ind = clip_scalar(self.frame_index - 1, self.bounds[0], self.bounds[1]-1)
-            self.vline.setValue(ind)
-            self.replot_frame()
+        if self.Z > 1:
+            if key == QtCore.Qt.Key_Left :
+                ind = clip_scalar(self.frame_index - 1, self.bounds[0], self.bounds[1]-1)
+                self.vline.setValue(ind)
+                self.replot_frame()
 
-        elif key == QtCore.Qt.Key_Right :
-            ind = clip_scalar(self.frame_index + 1, self.bounds[0], self.bounds[1]-1)
-            self.vline.setValue(ind)
-            self.replot_frame()
+            elif key == QtCore.Qt.Key_Right :
+                ind = clip_scalar(self.frame_index + 1, self.bounds[0], self.bounds[1]-1)
+                self.vline.setValue(ind)
+                self.replot_frame()
+
+
+class Frame_getter_file():
+
+    def __init__(self, fnam, dataset):
+        self.data = h5py.File(fnam)[dataset]
+        shape = self.data.shape
+
+        # check psana or slab shape
+        # check single or multiple images
+        self.slab_shape = None
+        self.frame_dims = None
+        if shape[-3:] == utils.DET_SHAPE: 
+            self.slab_shape = False
+            self.frame_dims = 3
+        elif shape[-2:] == utils.SLAB_SHAPE: 
+            self.slab_shape = True
+            self.frame_dims = 2
+
+        if self.slab_shape is None:
+            err = f'could not parse dataset frame shape {self.data.shape}'
+            raise ValueError(err)
+
+        if len(shape) == self.frame_dims:
+            self.single_frame = True
+            self.N = 1
+        elif len(shape) == (self.frame_dims) + 1:
+            self.single_frame = False
+            self.N = shape[0]
+        else:
+            err = f'could not parse dataset frame shape {self.data.shape}'
+            raise ValueError(err)
+
+        if self.single_frame:
+            self.data = np.array([self.data[()]])
+
+        # get image shape
+        frame = self.data[0]
+        self.geom_cor = utils.Geom_cor(np.float32)
+
+        im = self.geom_cor.get(frame)
+        print(f'{frame.shape=} {self.geom_cor.out.shape=}')
+        self.shape = (self.N,) + im.shape
+        self.dtype = im.dtype
+        self.inds = np.arange(self.shape[0])
+
+    def __getitem__(self, key):
+        """
+        only allow indexing along first dimension (events)
+        self[:10] or self[101]
+        """
+        inds = np.atleast_1d(self.inds[key])
+        out = []
+        for i in inds:
+            frame = self.data[i]
+            im = self.geom_cor.get(frame)
+            out.append(im)
+        return np.squeeze(out)
 
 
 class Frame_getter_psana():
@@ -191,11 +259,20 @@ class Frame_getter_psana():
 if __name__ == '__main__':
     args = parse_cmdline_args()
 
-    frame_getter = Frame_getter_psana(
-            args.EXP_NAME,
-            args.run,
-            args.DET_NAME
-            )
+    if args.file is not None:
+        fnam = Path(str(args.file).split('.h5')[0] + '.h5')
+        dataset = str(args.file).split('.h5')[1]
+        assert(fnam.is_file())
+        frame_getter = Frame_getter_file(fnam, dataset)
+
+    elif args.run is not None:
+        frame_getter = Frame_getter_psana(
+                args.EXP_NAME,
+                args.run,
+                args.DET_NAME
+                )
+    else:
+        raise ValueError('file or run must be specified')
 
     print('drag line with mouse or use arrow keys to scroll through frames')
 

@@ -10,6 +10,7 @@ import matplotlib.pyplot as plt
 
 DET_NAME = 'CxiDs1.0:Jungfrau.0'
 DET_SHAPE = (8, 512, 1024)
+SLAB_SHAPE = (4096, 1024)
 ASSEM_SHAPE = (2203, 2299)
 PIXEL_SIZE = 75e-6
 
@@ -203,6 +204,8 @@ def get_xy_map(
 
 def geom_cor(arr):
     x, y = get_xy_map()[:2]
+    x /= PIXEL_SIZE
+    y /= PIXEL_SIZE
     x0, y0 = x.min(), y.min()
     x = np.round(x-x0).astype(int)
     y = np.round(y-y0).astype(int)
@@ -217,6 +220,8 @@ class Geom_cor():
 
     def __init__(self, dtype):
         x, y = get_xy_map()[:2]
+        x /= PIXEL_SIZE
+        y /= PIXEL_SIZE
         x0, y0 = x.min(), y.min()
         x -= x0
         y -= y0
