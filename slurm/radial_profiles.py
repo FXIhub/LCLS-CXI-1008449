@@ -10,12 +10,12 @@ run = sys.argv[1]
 # output file
 fnam_out = f'{EXP_FOLDER}/results/h5out/r{run:>04}_radial_profiles.h5'
 
-
 # load geometry
 xyz, pixel_size = get_xyz(run)
 
 # load mask
-with h5py.File(f'{EXP_FOLDER}/results/mask/combine.h5') as f:
+# with h5py.File(f'{EXP_FOLDER}/results/mask/combine_r0085.h5') as f:
+with h5py.File(f'../mask/combine_r0085.h5') as f:
     # reshape to faciltiy standard
     mask = f['data/data'][()].reshape(xyz.shape[1:]) > 0
 
@@ -39,6 +39,7 @@ for evt in tqdm(ds.events(), disable=disable):
     frame = photon_convertion(det.calib(evt))
     rav = rad_av.make_rad_av(frame)
     smalldata.event({'radial_profile': rav})
+    smalldata.event({'radial_sums': rad_av.rsum})
 
 if smalldata.master:
     r_pixel = rad_av.rs / pixel_size
@@ -57,5 +58,5 @@ else:
     q = None
     res = None
 
-smalldata.save({'r_pixel': r_pixel, 'r_metre': r_metre, 'q_inv_metre': q, 'res_metre': res})
+smalldata.save({'r_pixel': r_pixel, 'r_metre': r_metre, 'r_nbins': rad_av.nbins, 'q_inv_metre': q, 'res_metre': res})
 smalldata.close()

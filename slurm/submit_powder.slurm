@@ -11,4 +11,5 @@
 
 source /sdf/group/lcls/ds/ana/sw/conda1/manage/bin/psconda.sh
 
-mpirun -n 32 python powder.py $1
+echo mpirun -n 32 python powder.py $@
+mpirun -n 32 python powder.py $@

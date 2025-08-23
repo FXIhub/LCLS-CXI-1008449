@@ -4,6 +4,7 @@ import numpy as np
 import psana
 import h5py
 import matplotlib.pyplot as plt
+from pathlib import Path
 
 
 
@@ -84,6 +85,54 @@ def get_xyz(run, x_offset=0, y_offset=0, detector_distance=0.5709):
     # set detector distance
     xyz[2] = detector_distance
     return xyz, PIXEL_SIZE
+
+def find_hits(run, sigma_thresh=3):
+    # find hits:
+    # based on distribution of photon counts
+    #---------------------------------------
+    fnam = Path(f'{EXP_FOLDER}/results/h5out/r{run:04d}_radial_profiles.h5')
+
+    if not fnam.is_file():
+        err = f"""could not find {fnam}
+        you need to run: sbatch submit_radial_profiles.slurm {run}
+        """
+        raise ValueError(err)
+
+    with h5py.File(str(fnam)) as f:
+        rsums = np.sum(f['radial_sums'][:, 100:200], axis=1)
+        ravs = f['radial_profile'][()]
+        event_times = f['event_time'][()]
+        fiducials = f['fiducials'][()]
+
+    # fit gaussian to both sides of peak
+    from scipy import ndimage, optimize
+    def gaussian(x, a, x0, sigma):
+        return a * np.exp(-(x-x0)**2 / 2 / sigma**2)
+
+    x = np.arange(len(h))
+    x0 = np.argmax(h)
+    a = h[x0]
+    sigma = 100
+
+    popt, pcov = optimize.curve_fit(gaussian,
+                                    x, h,
+                                    p0=(a, x0, sigma))
+    # thresh[:] = popt[1] + 4*np.abs(popt[2])
+    s = (x-popt[1]) / popt[2]
+    fig, ax = plt.subplots(layout='tight')
+    ax.plot(s, h)
+    ax.plot(s, gaussian(x, *popt))
+    # ax.set_yscale('log')
+    # ax.set_xscale('log')
+    # ax.set_xlim([20, 200])
+    ax.set_xlim([s.min(), 10])
+
+    threshold = popt[1] + sigma_thresh * popt[2]
+    hits_mask = rsums > threshold
+    hits = np.sum(hits_mask)
+    print('number of hits:', hits)
+    print('hit rate:', 100 * hits / rsums.size)
+    return event_times[hit_mask], fiducials[hit_mask]
 
 
 def pixel_maps_from_geometry_file(fnam, return_dict = False):
@@ -243,8 +292,12 @@ class Radial_average():
     A class for doing radial averages, faster than calling a function for repeated calls
     """
 
-    def __init__(self, xyz, mask, radial_bin_size, min_rad=None, max_rad=None):
-        self.r = (xyz[0]**2 + xyz[1]**2)**0.5
+    def __init__(self, xyz, mask, radial_bin_size, min_rad=None, max_rad=None, dim=2):
+        if dim == 3:
+            self.r = (xyz[0]**2 + xyz[1]**2 + xyz[2]**2)**0.5
+        else:
+            self.r = (xyz[0]**2 + xyz[1]**2)**0.5
+
         self.radial_bin_size = radial_bin_size
 
         self.mask = mask.copy()
@@ -260,22 +313,23 @@ class Radial_average():
         self.rl = np.ascontiguousarray(self.rl)
 
         # number of pixels contributing to each bin
-        self.rcounts = np.bincount(self.rl.ravel())
+        self.nbins = np.bincount(self.rl.ravel())
 
         # for reference
         self.rs = np.arange(np.max(self.rl)+1) * self.radial_bin_size
 
     def make_rad_av(self, ar):
-        rsum = np.bincount(self.rl, ar[self.mask])
+        self.rsum = np.bincount(self.rl, ar[self.mask])
 
         # normalise, might not want to do this
-        rsum /= np.clip(self.rcounts, 1e-20, None)
-        return rsum
+        out = self.rsum / np.clip(self.nbins, 1, None)
+        return out
 
     def make_im(self, rav):
         im = np.zeros(self.r.shape, dtype = rav.dtype)
         im[self.mask] = rav[self.rl]
         return im
+
 
 
 def get_run_azimuthal_average(run, rbins=100, rmin=None, rmax=None, suff=''):

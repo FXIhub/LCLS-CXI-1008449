@@ -14,7 +14,7 @@ assert(fnam.is_file())
 with h5py.File(fnam) as f:
     rads = f['radial_profile'][()]
 
-sums = np.sum(rads[:, :100], axis=1)
+sums = np.sum(rads[:, 60:100], axis=1)
 
 with h5py.File(fnam, 'r+') as f:
     key = 'lowq_sum'
