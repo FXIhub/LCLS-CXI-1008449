@@ -24,7 +24,7 @@ GEOM_FILE = f'{EXP_FOLDER}/results/geom/jul17convert.geom'
 
 
 def photon_convertion(ar):
-    return np.clip((ar/6 + 0.2).astype(int), 0, None)
+    return np.clip((ar/6 + 0.2).astype(np.uint8), 0, 255)
 
 
 def get_run_assem_mean(run, suff=''):
@@ -132,7 +132,7 @@ def find_hits(run, sigma_thresh=3):
     hits = np.sum(hits_mask)
     print('number of hits:', hits)
     print('hit rate:', 100 * hits / rsums.size)
-    return event_times[hit_mask], fiducials[hit_mask]
+    return event_times, fiducials, hits_mask
 
 
 def pixel_maps_from_geometry_file(fnam, return_dict = False):
