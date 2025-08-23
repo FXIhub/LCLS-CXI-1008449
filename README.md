@@ -19,6 +19,11 @@ ssh psana
 cd /sdf/data/lcls/ds/cxi/cxi100844924
 ```
 
+To transfer files over ssh:
+```
+rsync -vrtlpzh --progress -e 'ssh -A -J amorgan@s3dflogin.slac.stanford.edu:22' amorgan@psana:/sdf/data/lcls/ds/cxi/cxi100844924/results/h5out/r0105_powder.h5 .p
+```
+
 ### Github push permissions
 Point ssh to deployed key for automatic push permissions:
 ```
