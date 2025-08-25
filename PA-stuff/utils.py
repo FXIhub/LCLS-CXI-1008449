@@ -104,6 +104,8 @@ def find_hits(run, sigma_thresh=3):
         event_times = f['event_time'][()]
         fiducials = f['fiducials'][()]
 
+    h = np.bincount(rsums.astype(int))
+
     # fit gaussian to both sides of peak
     from scipy import ndimage, optimize
     def gaussian(x, a, x0, sigma):

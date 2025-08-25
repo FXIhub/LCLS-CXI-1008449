@@ -1,11 +1,12 @@
 import numpy as np
 import h5py
 from utils import *  # sorry
+from tqdm import tqdm
 import psana
 
 run = 105
 cxi_fnam = f'{EXP_FOLDER}/scratch/cxi/r{run:04d}_hits.cxi'
-mask_fnam = '../mask/combine_r0085.h5'
+mask_fnam = '../mask/combine.h5'
 sample_name = 'Au octahedra'
 data_dtype = np.uint8
 
@@ -64,6 +65,7 @@ detector['mask'] = mask
 detector['x_pixel_size'] = x_pixel_size
 detector['y_pixel_size'] = y_pixel_size
 detector['pixel_area'] = pixel_area
+detector['xyz_map'] = xyz_map
 
 # get psana stuff from radial profiles
 def process_h5_object(name, obj):
@@ -72,7 +74,7 @@ def process_h5_object(name, obj):
     """
     if isinstance(obj, h5py.Dataset):
         print(f"Found Dataset: {name}")
-        if obj.shape[0] == N:
+        if len(obj.shape) > 0 and obj.shape[0] == N:
             f[name] = obj[()][hit_mask]
 
     elif isinstance(obj, h5py.Group):
@@ -86,7 +88,7 @@ with h5py.File(fnam, 'r') as g:
 
 
 # write data
-data = detector_1.create_dataset("data",
+data = detector.create_dataset("data",
             shape=(N,) + DET_SHAPE,
             dtype=data_dtype,
             chunks=(1,) + DET_SHAPE,
@@ -103,6 +105,9 @@ for i in tqdm(range(len(event_times)), total=N, desc='saving data'):
     frame *= mask
     photon_counts[i] = np.sum(frame)
     litpixels[i] = np.sum(frame>0)
+
+detector['photon_counts'] = photon_counts
+detector['litpixels'] = litpixels
 
 # link /entry_1/data_1/data
 f["entry_1/data_1/data"] = h5py.SoftLink('/entry_1/instrument_1/detector_1/data')
