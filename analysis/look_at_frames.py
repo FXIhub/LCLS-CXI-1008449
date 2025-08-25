@@ -8,9 +8,11 @@ import os
 import pickle
 from tqdm import tqdm
 import signal
-import psana
 
 # do this to make script independent of other files
+import utils
+DET_NAME = utils.DET_NAME
+EXP_NAME = utils.EXP_NAME
 try:
     import utils
     DET_NAME = utils.DET_NAME
@@ -163,10 +165,10 @@ class Frame_getter_file():
         # check single or multiple images
         self.slab_shape = None
         self.frame_dims = None
-        if shape[-3:] == utils.DET_SHAPE: 
+        if shape[-3:] == utils.DET_SHAPE:
             self.slab_shape = False
             self.frame_dims = 3
-        elif shape[-2:] == utils.SLAB_SHAPE: 
+        elif shape[-2:] == utils.SLAB_SHAPE:
             self.slab_shape = True
             self.frame_dims = 2
 
@@ -226,6 +228,7 @@ class Frame_getter_psana():
         # load timestamps
         # should be able to do this faster, but I forget where the documentation is
         # found it here: https://confluence.slac.stanford.edu/spaces/PSDM/pages/195233556/Jump+Quickly+to+Events+Using+Timestamps
+        import psana
         ds = psana.DataSource(f'exp={exp_name}:run={run}:smd')
         event_times = []
         for evt in tqdm(
@@ -285,8 +288,15 @@ if __name__ == '__main__':
     args = parse_cmdline_args()
 
     if args.sort_by is not None:
-        fnam, dataset = args.sort_by.split('.h5')
-        fnam = Path(fnam + '.h5')
+        if '.h5' in args.file:
+            split = '.h5'
+        elif '.cxi' in args.file:
+            split = '.cxi'
+        else:
+            raise ValueError('file extension must be .h5 or .cxi')
+
+        fnam, dataset = args.sort_by.split(split)
+        fnam = Path(fnam + split)
         assert(fnam.is_file())
         with h5py.File(fnam) as f:
             sort_by = f[dataset][()]
@@ -294,8 +304,16 @@ if __name__ == '__main__':
         sort_by = None
 
     if args.file is not None:
-        fnam, dataset = args.file.split('.h5')
-        fnam = Path(fnam + '.h5')
+        if '.h5' in args.file:
+            split = '.h5'
+        elif '.cxi' in args.file:
+            split = '.cxi'
+        else:
+            raise ValueError('file extension must be .h5 or .cxi')
+
+        fnam, dataset = args.file.split(split)
+        fnam = Path(fnam + split)
+        print(fnam)
         assert(fnam.is_file())
         frame_getter = Frame_getter_file(
                 fnam,

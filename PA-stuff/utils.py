@@ -1,9 +1,9 @@
 
 
 import numpy as np
-import psana
 import h5py
 import matplotlib.pyplot as plt
+import pathlib
 from pathlib import Path
 
 
@@ -28,6 +28,7 @@ def photon_convertion(ar):
 
 
 def get_run_assem_mean(run, suff=''):
+    import psana
     with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc{suff}.h5') as f:
         run_mean = f['/run_mean'][:]
     ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
@@ -220,9 +221,17 @@ def pixel_maps_from_geometry_file(fnam, return_dict = False):
 
 
 def get_xy_map(
-        geom_fnam='/sdf/data/lcls/ds/cxi/cxi100844924/scratch/LCLS-CXI-1008449/geom/r0115_new.geom',
+        geom_fnam=None,
         slab_shape=False
         ):
+
+    # at lcls:
+    # geom_fnam='/sdf/data/lcls/ds/cxi/cxi100844924/scratch/LCLS-CXI-1008449/geom/r0115_new.geom',
+    if geom_fnam is None:
+        script_path = pathlib.Path(__file__).resolve()
+        script_directory = script_path.parent
+        geom_fnam = script_directory / '../geom/r0115_new.geom'
+
     # pixel size 75e-6 m
     x, y, parsed_detector_dict = pixel_maps_from_geometry_file(geom_fnam, return_dict=True)
 
@@ -333,31 +342,30 @@ class Radial_average():
 
 
 def get_run_azimuthal_average(run, rbins=100, rmin=None, rmax=None, suff=''):
+    import psana
 
     with h5py.File(f'{H5_FOLDER}/r{int(run):04d}_proc{suff}.h5') as f:
         run_mean = f['/run_mean'][:]
-    
+
     ds = psana.DataSource(f'exp={EXP_NAME}:run={run}:smd')
     det = psana.Detector(DET_NAME)
-    
+
     cx, cy = det.coords_xy(run)
-    
-    
+
     r = np.sqrt(cx**2+cy**2)
 
     if rmin is None:
         rmin=r.min()
     if rmax is None:
         rmax = r.max()
-    
-    
+
     rbins = np.linspace(rmin, rmax, rbins)
     r_digit = np.digitize(r, rbins)
-    
+
     r_counts = np.bincount(r_digit.flatten())
-    
+
     r_sum = np.bincount(r_digit.flatten(), weights=run_mean.flatten())
-    
+
     r_sum[r_counts>0] /= r_counts[r_counts>0]
 
     return rbins, r_sum
